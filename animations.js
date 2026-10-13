@@ -38,7 +38,7 @@ const Anim = (() => {
     const mots = el.textContent.trim().split(/\s+/);
     el.setAttribute("aria-label", el.textContent.trim());
     el.innerHTML = mots
-      .map((m, i) => `<span class="w" aria-hidden="true"><span style="--i:${i}">${m.replace(/</g, "&lt;")}</span></span>`)
+      .map((m, i) => `<span class="w" aria-hidden="true"><span style="--i:${i}">${esc(m)}</span></span>`)
       .join(" ");
   }
 

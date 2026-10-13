@@ -282,11 +282,14 @@ function renderChips() {
     .join("");
 }
 
+// Minuscules sans accents : « alaia » trouve « Alaïa »
+const normaliser = (t) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+
 function renderGrid() {
-  const q = $("#search").value.trim().toLowerCase();
+  const q = normaliser($("#search").value.trim());
   const liste = MANNEQUINS.filter((m) =>
     (filtreGroupe === "Tous" || m.groupe === filtreGroupe) &&
-    (!q || [m.nom, m.pays, m.surnom, ...m.marques].join(" ").toLowerCase().includes(q))
+    (!q || normaliser([m.nom, m.pays, m.surnom, ...m.marques].join(" ")).includes(q))
   );
   $("#grid").innerHTML = liste.length
     ? liste.map((m) => {
@@ -462,11 +465,15 @@ function renderCarriere(m, panel) {
     <div class="article"></div>`;
 
   const conteneur = $(".article", panel);
+  let demande = 0;
   const afficher = async (lang) => {
+    const numero = ++demande;
     panel.querySelectorAll("[data-lang]").forEach((b) => b.classList.toggle("active", b.dataset.lang === lang));
     conteneur.innerHTML = `<p class="loading">Chargement de l'article Wikipedia…</p>`;
     try {
       const a = await chargerArticle(m, lang);
+      // Une autre langue a été demandée entre-temps
+      if (numero !== demande) return;
       const motsCles = /carri|career|défil|mannequin|model|filmo|clip|vid[eé]o|télévision|television|distinction|récompense|award|recognition/i;
       conteneur.innerHTML = `
         <p class="article-meta">Source : <a href="${escapeHtml(a.url)}" target="_blank" rel="noopener">Wikipedia — ${escapeHtml(a.titre)}</a>
@@ -490,6 +497,7 @@ function renderCarriere(m, panel) {
         }).catch(() => {});
       }
     } catch (e) {
+      if (numero !== demande) return;
       conteneur.innerHTML = `<p class="loading">Article indisponible dans cette langue (${escapeHtml(e.message)}).</p>`;
     }
   };
@@ -510,19 +518,22 @@ function renderPhotos(m, panel) {
     <div class="gallery-more"></div>`;
   const grille = $(".gallery", panel);
   const plus = $(".gallery-more", panel);
+  const fiche = ficheCourante;
 
   const charger = async (offset) => {
     plus.innerHTML = `<p class="loading">Chargement des photos…</p>`;
     try {
       const { photos, suite } = await chercherPhotos(m, offset);
-      const debut = ficheCourante.photos.length;
-      ficheCourante.photos.push(...photos);
+      // La fiche a été fermée ou remplacée pendant le chargement
+      if (fiche !== ficheCourante) return;
+      const debut = fiche.photos.length;
+      fiche.photos.push(...photos);
       grille.insertAdjacentHTML("beforeend", photos.map((p, i) => `
         <button class="gallery-item" data-photo="${debut + i}" style="--n:${i}" title="${escapeHtml(p.legende)}">
           <img src="${escapeHtml(p.miniature)}" alt="${escapeHtml(p.legende)}" loading="lazy">
           ${p.date ? `<span>${escapeHtml(p.date.slice(0, 4))}</span>` : ""}
         </button>`).join(""));
-      if (!ficheCourante.photos.length) {
+      if (!fiche.photos.length) {
         const w = wikiCache[m.id] || {};
         plus.innerHTML = `<p class="loading">Aucune photo libre de droits sur Wikimedia Commons pour ${escapeHtml(m.nom)}.</p>
           <a class="yt-link" href="https://www.google.com/search?tbm=isch&q=${encodeURIComponent(m.nom + " 90s runway")}" target="_blank" rel="noopener">Rechercher des photos sur Google Images →</a>
@@ -648,7 +659,8 @@ const lightbox = $("#lightbox");
 lightbox.addEventListener("click", (e) => {
   if (e.target.closest("#lb-prev")) return ouvrirLightbox(photoCourante - 1);
   if (e.target.closest("#lb-next")) return ouvrirLightbox(photoCourante + 1);
-  if (e.target === lightbox || e.target.closest("#lb-close")) lightbox.close();
+  // La visionneuse occupe tout l'écran : un clic sur la zone vide autour de la photo la ferme
+  if (e.target === lightbox || e.target.id === "lightbox-body" || e.target.closest("#lb-close")) lightbox.close();
 });
 document.addEventListener("keydown", (e) => {
   if (!lightbox.open) return;

@@ -37,6 +37,8 @@ a { color: inherit; }
     linear-gradient(180deg, #5a0716, #2a030a);
   transition: transform 1.4s var(--ease);
 }
+/* Bloque les clics vers la page tant que le rideau est fermé */
+.intro:not(.open) { pointer-events: auto; }
 .intro-curtain-l { left: 0; }
 .intro-curtain-r { right: 0; }
 .intro-title { font-family: var(--serif); font-weight: 900; font-size: clamp(3.5rem, 13vw, 11rem); letter-spacing: -.02em; line-height: 1; white-space: nowrap; }

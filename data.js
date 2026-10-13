@@ -161,7 +161,7 @@ const MANNEQUINS = [
     groupe: "Supermodèles",
     surnom: "La Danoise",
     resume:
-      "Ancienne Miss Danemark, Helena Christensen devient l'une des visages majeurs du début des années 90, également reconnue comme photographe.",
+      "Ancienne Miss Danemark, Helena Christensen devient l'un des visages majeurs du début des années 90, également reconnue comme photographe.",
     moments: [
       "Couronnée Miss Danemark en 1986",
       "Clip « Wicked Game » de Chris Isaak (1991), réalisé par Herb Ritts",
